@@ -1246,6 +1246,11 @@ namespace Azure.Messaging.EventHubs.Amqp
                 ReceiveBufferSize = receiveBufferSizeBytes,
             };
 
+            if (!useTls)
+            {
+                return tcpSettings;
+            }
+
             return new TlsTransportSettings(tcpSettings)
             {
                 TargetHost = connectionEndpoint.Host,
