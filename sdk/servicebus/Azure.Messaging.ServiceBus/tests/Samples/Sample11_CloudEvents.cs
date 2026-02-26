@@ -67,7 +67,8 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
                 Assert.AreEqual("Homer", receivedEmployee.Name);
                 Assert.AreEqual("application/cloudevents+json", receivedMessage.ContentType);
                 Assert.AreEqual(39, receivedEmployee.Age);
-                Assert.IsNull(await CreateNoRetryClient().CreateReceiver(queueName).ReceiveMessageAsync());
+                await using var noRetryClient = CreateNoRetryClient();
+                Assert.IsNull(await noRetryClient.CreateReceiver(queueName).ReceiveMessageAsync());
             }
         }
 

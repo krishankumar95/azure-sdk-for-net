@@ -12,7 +12,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
     public class Sample13_AdvancedConfiguration : ServiceBusLiveTestBase
     {
         [Test]
-        public void ConfigureProxy()
+        public async Task ConfigureProxy()
         {
             #region Snippet:ServiceBusConfigureTransport
 #if SNIPPET
@@ -20,7 +20,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 #else
             string connectionString = TestEnvironment.ServiceBusConnectionString;
 #endif
-            var client = new ServiceBusClient(connectionString, new ServiceBusClientOptions
+            await using var client = new ServiceBusClient(connectionString, new ServiceBusClientOptions
             {
                 TransportType = ServiceBusTransportType.AmqpWebSockets,
                 WebProxy = new WebProxy("https://myproxyserver:80")
@@ -31,7 +31,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
         }
 
         [Test]
-        public void ConfigureRetryOptions()
+        public async Task ConfigureRetryOptions()
         {
             #region Snippet:ServiceBusConfigureRetryOptions
 #if SNIPPET
@@ -39,7 +39,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 #else
             string connectionString = TestEnvironment.ServiceBusConnectionString;
 #endif
-            var client = new ServiceBusClient(connectionString, new ServiceBusClientOptions
+            await using var client = new ServiceBusClient(connectionString, new ServiceBusClientOptions
             {
                 RetryOptions = new ServiceBusRetryOptions
                 {
@@ -52,7 +52,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
         }
 
         [Test]
-        public void ConfigurePrefetchReceiver()
+        public async Task ConfigurePrefetchReceiver()
         {
             #region Snippet:ServiceBusConfigurePrefetchReceiver
 #if SNIPPET
@@ -60,7 +60,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 #else
             string connectionString = TestEnvironment.ServiceBusConnectionString;
 #endif
-            var client = new ServiceBusClient(connectionString);
+            await using var client = new ServiceBusClient(connectionString);
             ServiceBusReceiver receiver = client.CreateReceiver("<queue-name>", new ServiceBusReceiverOptions
             {
                 PrefetchCount = 10
@@ -71,7 +71,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
         }
 
         [Test]
-        public void ConfigurePrefetchProcessor()
+        public async Task ConfigurePrefetchProcessor()
         {
             #region Snippet:ServiceBusConfigurePrefetchProcessor
 #if SNIPPET
@@ -79,7 +79,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 #else
             string connectionString = TestEnvironment.ServiceBusConnectionString;
 #endif
-            var client = new ServiceBusClient(connectionString);
+            await using var client = new ServiceBusClient(connectionString);
             ServiceBusProcessor processor = client.CreateProcessor("<queue-name>", new ServiceBusProcessorOptions
             {
                 PrefetchCount = 10
@@ -99,7 +99,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 #else
             string connectionString = TestEnvironment.ServiceBusConnectionString;
 #endif
-            var client = new ServiceBusClient(connectionString);
+            await using var client = new ServiceBusClient(connectionString);
 
             // create a processor that we can use to process the messages
             await using ServiceBusProcessor processor = client.CreateProcessor("<queue-name>");
@@ -166,7 +166,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 #else
             string connectionString = TestEnvironment.ServiceBusConnectionString;
 #endif
-            var client = new ServiceBusClient(connectionString);
+            await using var client = new ServiceBusClient(connectionString);
 
             // create a processor that we can use to process the messages
             await using ServiceBusSessionProcessor processor = client.CreateSessionProcessor("<queue-name>");

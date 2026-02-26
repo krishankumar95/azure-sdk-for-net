@@ -26,7 +26,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 
                 #region Snippet:ServiceBusWriteReceivedMessage
 
-                var client1 = new ServiceBusClient(connectionString);
+                await using var client1 = new ServiceBusClient(connectionString);
                 ServiceBusSender sender = client1.CreateSender(queueName);
 
                 var message = new ServiceBusMessage("some message");
@@ -42,7 +42,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
                 AmqpAnnotatedMessage amqpMessage = AmqpAnnotatedMessage.FromBytes(new BinaryData(amqpMessageBytes));
                 ServiceBusReceivedMessage rehydratedMessage = ServiceBusReceivedMessage.FromAmqpMessage(amqpMessage, new BinaryData(lockTokenBytes));
 
-                var client2 = new ServiceBusClient(connectionString);
+                await using var client2 = new ServiceBusClient(connectionString);
                 ServiceBusReceiver receiver2 = client2.CreateReceiver(queueName);
                 await receiver2.CompleteMessageAsync(rehydratedMessage);
                 #endregion
@@ -66,7 +66,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 
                 #region Snippet:ServiceBusWriteReceivedMessageLockToken
 
-                var client1 = new ServiceBusClient(connectionString);
+                await using var client1 = new ServiceBusClient(connectionString);
                 ServiceBusSender sender = client1.CreateSender(queueName);
 
                 var message = new ServiceBusMessage("some message");
@@ -81,7 +81,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Samples
 
                 ServiceBusReceivedMessage rehydratedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(lockTokenGuid: new Guid(lockTokenBytes.ToArray()));
 
-                var client2 = new ServiceBusClient(connectionString);
+                await using var client2 = new ServiceBusClient(connectionString);
                 ServiceBusReceiver receiver2 = client2.CreateReceiver(queueName);
                 await receiver2.CompleteMessageAsync(rehydratedMessage);
                 #endregion
