@@ -14,8 +14,8 @@ namespace Azure.Messaging.EventHubs.Tests
     ///
     public class StorageTestEnvironment : TestEnvironment
     {
-        /// <summary>The environment variable name of the storage account connection string.</summary>
-        private const string StorageAccountConnectionStringEnvironmentVariable = "EVENTHUB_PROCESSOR_STORAGE_CONNECTION_STRING";
+        /// <summary>The default Azurite connection string for local storage emulation.</summary>
+        private const string AzuriteConnectionString = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;";
 
         /// <summary>The singleton instance of the <see cref="StorageTestEnvironment" />, lazily created.</summary>
         private static readonly Lazy<StorageTestEnvironment> Singleton = new Lazy<StorageTestEnvironment>(() => new StorageTestEnvironment(), LazyThreadSafetyMode.ExecutionAndPublication);
@@ -47,7 +47,7 @@ namespace Azure.Messaging.EventHubs.Tests
         ///
         /// <value>The connection string will be determined by creating an ephemeral Azure storage account for the test execution.</value>
         ///
-        public string StorageConnectionString => $"DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=SOME_KEY_VAL;BlobEndpoint=http://localhost:10000/devstoreaccount1;";
+        public string StorageConnectionString => AzuriteConnectionString;
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="StorageTestEnvironment"/> class.
@@ -66,10 +66,7 @@ namespace Azure.Messaging.EventHubs.Tests
         ///
         private StorageProperties EnsureStorageAccount()
         {
-            // The call to "GetVariable" will validate the environment variable and bootstrap
-            // test resource creation if needed.
-
-            var connectionString = GetVariable(StorageAccountConnectionStringEnvironmentVariable);
+            var connectionString = AzuriteConnectionString;
             var nameStart = (connectionString.IndexOf('=', connectionString.IndexOf("AccountName")) + 1);
             var nameLength = (connectionString.IndexOf(';', nameStart) - nameStart);
 
