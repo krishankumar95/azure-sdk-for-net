@@ -18,6 +18,11 @@ namespace Azure.Messaging.ServiceBus.Tests
         /// <summary>The name of the shared access key to be used for accessing an Service Bus namespace.</summary>
         public const string ServiceBusDefaultSharedAccessKey = "RootManageSharedAccessKey";
 
+        /// <summary>The connection string for the Service Bus emulator.</summary>
+        public const string EmulatorConnectionString = "Endpoint=sb://localhost;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+
+        public const string ServiceBusEmulatorAdminClientString = "Endpoint=sb://localhost:5300;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;";
+
         /// <summary>A shared instance of <see cref="ServiceBusTestEnvironment"/>. </summary>
         public static ServiceBusTestEnvironment Instance { get; } = new ServiceBusTestEnvironment();
 
@@ -31,9 +36,7 @@ namespace Azure.Messaging.ServiceBus.Tests
         ///
         /// <value>The connection string will be determined by creating an ephemeral Service Bus namespace for the test execution.</value>
         ///
-        public string ServiceBusConnectionString => GetRecordedVariable(
-            "SERVICEBUS_CONNECTION_STRING",
-            options => options.HasSecretConnectionStringParameter("SharedAccessKey", SanitizedValue.Base64));
+        public string ServiceBusConnectionString => EmulatorConnectionString;
 
         /// <summary>
         ///   The connection string for the premium Service Bus namespace instance to be used for
@@ -42,9 +45,7 @@ namespace Azure.Messaging.ServiceBus.Tests
         ///
         /// <value>The connection string will be determined by creating an ephemeral Service Bus namespace for the test execution.</value>
         ///
-        public string ServiceBusPremiumNamespaceConnectionString => GetRecordedVariable(
-            "SERVICEBUS_PREMIUM_NAMESPACE_CONNECTION_STRING",
-            options => options.HasSecretConnectionStringParameter("SharedAccessKey", SanitizedValue.Base64));
+        public string ServiceBusPremiumNamespaceConnectionString => EmulatorConnectionString;
 
         /// <summary>
         ///   The connection string for the secondary Service Bus namespace instance to be used for
@@ -53,9 +54,7 @@ namespace Azure.Messaging.ServiceBus.Tests
         ///
         /// <value>The connection string will be determined by creating an ephemeral Service Bus namespace for the test execution.</value>
         ///
-        public string ServiceBusSecondaryNamespaceConnectionString => GetRecordedVariable(
-            "SERVICEBUS_SECONDARY_NAMESPACE_CONNECTION_STRING",
-            options => options.HasSecretConnectionStringParameter("SharedAccessKey", SanitizedValue.Base64));
+        public string ServiceBusSecondaryNamespaceConnectionString => EmulatorConnectionString;
 
         /// <summary>
         ///   The name of the Service Bus namespace to be used for Live tests.
@@ -167,9 +166,13 @@ namespace Azure.Messaging.ServiceBus.Tests
         {
             var parsed = ServiceBusConnectionStringProperties.Parse(serviceBusConnectionString);
 
+            var host = parsed.Endpoint.Host;
+            var dotIndex = host.IndexOf('.');
+            var name = dotIndex >= 0 ? host.Substring(0, dotIndex) : host;
+
             return new NamespaceProperties
             (
-                parsed.Endpoint.Host.Substring(0, parsed.Endpoint.Host.IndexOf('.')),
+                name,
                 serviceBusConnectionString.Replace($";EntityPath={parsed.EntityPath}", string.Empty),
                 false
             );

@@ -19,19 +19,32 @@ namespace Azure.Messaging.ServiceBus.Tests
     ///
     public static class ServiceBusScope
     {
-        private static ServiceBusAdministrationClient s_adminClient =>
-            new ServiceBusAdministrationClient(
-                $"{ServiceBusTestEnvironment.Instance.FullyQualifiedNamespace}",
-                ServiceBusTestEnvironment.Instance.Credential,
-                // disable tracing so as not to impact any tracing tests
-                new ServiceBusAdministrationClientOptions { Diagnostics = { IsDistributedTracingEnabled = false } });
+        private static ServiceBusAdministrationClient CreateAdminClient()
+        {
+            var clientOptions = new ServiceBusAdministrationClientOptions
+            {
+                Retry =
+                {
+                    MaxRetries = 0,
+                    NetworkTimeout = TimeSpan.FromSeconds(60),
+                }
+            };
+            return new ServiceBusAdministrationClient(ServiceBusTestEnvironment.ServiceBusEmulatorAdminClientString, clientOptions);
+        }
 
-        private static ServiceBusAdministrationClient s_secondaryAdminClient =>
-            new ServiceBusAdministrationClient(
-                $"{ServiceBusTestEnvironment.Instance.SecondaryFullyQualifiedNamespace}",
-                ServiceBusTestEnvironment.Instance.Credential,
-                // disable tracing so as not to impact any tracing tests
-                new ServiceBusAdministrationClientOptions { Diagnostics = { IsDistributedTracingEnabled = false } });
+        private static ServiceBusAdministrationClient s_adminClient => CreateAdminClient();
+        //new ServiceBusAdministrationClient(
+        //    $"{ServiceBusTestEnvironment.Instance.FullyQualifiedNamespace}",
+        //    ServiceBusTestEnvironment.Instance.Credential,
+        //    // disable tracing so as not to impact any tracing tests
+        //    new ServiceBusAdministrationClientOptions { Diagnostics = { IsDistributedTracingEnabled = false } });
+
+        private static ServiceBusAdministrationClient s_secondaryAdminClient => CreateAdminClient();
+            //new ServiceBusAdministrationClient(
+            //    $"{ServiceBusTestEnvironment.Instance.SecondaryFullyQualifiedNamespace}",
+            //    ServiceBusTestEnvironment.Instance.Credential,
+            //    // disable tracing so as not to impact any tracing tests
+            //    new ServiceBusAdministrationClientOptions { Diagnostics = { IsDistributedTracingEnabled = false } });
 
         /// <summary>
         ///   Creates a Service Bus scope associated with a queue instance, intended to be used in the context
@@ -54,9 +67,6 @@ namespace Azure.Messaging.ServiceBus.Tests
                                                              TimeSpan? defaultMessageTimeToLive = default,
                                                              [CallerMemberName] string caller = "")
         {
-            // Create a new queue specific to the scope being created.
-            EmulatorServiceBusConfig.NamespaceConfigObject.QueueProperties queueProperties = new EmulatorServiceBusConfig.NamespaceConfigObject.QueueProperties() { EnablePartitioning = enablePartitioning, RequiresSession = enableSession };
-
             caller = (caller.Length < 16) ? caller : caller.Substring(0, 15);
 
             var queueName = $"{ Guid.NewGuid().ToString("D").Substring(0, 13) }-{ caller }";
@@ -69,24 +79,17 @@ namespace Azure.Messaging.ServiceBus.Tests
             if (lockDuration.HasValue)
             {
                 queueOptions.LockDuration = lockDuration.Value;
-                queueProperties.LockDuration = XmlConvert.ToString(lockDuration.Value);
             }
 
             if (defaultMessageTimeToLive.HasValue)
             {
                 queueOptions.DefaultMessageTimeToLive = defaultMessageTimeToLive.Value;
-                queueProperties.DefaultMessageTimeToLive = XmlConvert.ToString(defaultMessageTimeToLive.Value);
             }
 
             var client = useSecondaryNamespace ? s_secondaryAdminClient : s_adminClient;
 
-            //QueueProperties queueProperties = await client.CreateQueueAsync(queueOptions);
-            await EmulatorServiceBusController.CreateServiceBusOnExternalHost(
-                new List<EmulatorServiceBusConfig.NamespaceConfigObject.QueueConfig>() {
-                    new EmulatorServiceBusConfig.NamespaceConfigObject.QueueConfig()
-                    { Name = queueOptions.Name ,Properties =queueProperties
-                    } });
-            return new QueueScope(queueOptions.Name, true, useSecondaryNamespace);
+            QueueProperties queueProperties = await client.CreateQueueAsync(queueOptions);
+            return new QueueScope(queueProperties.Name, true, useSecondaryNamespace);
         }
 
         /// <summary>
@@ -116,11 +119,7 @@ namespace Azure.Messaging.ServiceBus.Tests
                 EnablePartitioning = enablePartitioning
             };
 
-            //TopicProperties topicProperties = await s_adminClient.CreateTopicAsync(topicOptions);
-            EmulatorServiceBusConfig.NamespaceConfigObject.TopicConfig  topic = new EmulatorServiceBusConfig.NamespaceConfigObject.TopicConfig() { Name = topicName,Properties = new EmulatorServiceBusConfig.NamespaceConfigObject.TopicProperties() { EnablePartitioning = enablePartitioning} };
-            topic.Subscriptions = new List<EmulatorServiceBusConfig.NamespaceConfigObject.SubscriptionConfig>();
-
-            TopicProperties topicProperties = new TopicProperties(topicName);
+            TopicProperties topicProperties = await s_adminClient.CreateTopicAsync(topicOptions);
             var activeSubscriptions = new List<string>();
 
             foreach (var subscription in topicSubscriptions)
@@ -129,13 +128,9 @@ namespace Azure.Messaging.ServiceBus.Tests
                 {
                     RequiresSession = enableSession
                 };
-                //SubscriptionProperties subscriptionProperties = await s_adminClient.CreateSubscriptionAsync(subscriptionOptions);
-                SubscriptionProperties subscriptionProperties = new SubscriptionProperties(subscriptionOptions) { RequiresSession = enableSession};
+                SubscriptionProperties subscriptionProperties = await s_adminClient.CreateSubscriptionAsync(subscriptionOptions);
                 activeSubscriptions.Add(subscriptionProperties.SubscriptionName);
-                topic.Subscriptions.Add(new EmulatorServiceBusConfig.NamespaceConfigObject.SubscriptionConfig() { Name = subscription, Properties = new EmulatorServiceBusConfig.NamespaceConfigObject.SubscriptionProperties() { RequiresSession = enableSession } });
             }
-
-            await EmulatorServiceBusController.CreateServiceBusOnExternalHost(null,new List<EmulatorServiceBusConfig.NamespaceConfigObject.TopicConfig>() { topic});
 
             return new TopicScope(topicProperties.Name, activeSubscriptions, true);
         }

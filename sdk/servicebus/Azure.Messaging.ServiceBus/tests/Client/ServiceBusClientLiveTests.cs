@@ -238,7 +238,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Client
         {
             await using (var scope = await ServiceBusScope.CreateWithQueue(enablePartitioning: false, enableSession: true))
             {
-                var client = CreateClient(60);
+                await using var client = CreateClient(60);
                 var duration = TimeSpan.FromSeconds(5);
                 using var cancellationTokenSource = new CancellationTokenSource(duration);
 
@@ -262,7 +262,7 @@ namespace Azure.Messaging.ServiceBus.Tests.Client
         {
             await using (var scope = await ServiceBusScope.CreateWithQueue(enablePartitioning: false, enableSession: true))
             {
-                var client = CreateClient();
+                await using var client = CreateClient();
                 var receiver = await client.AcceptSessionAsync(scope.QueueName, "");
                 Assert.AreEqual("", receiver.SessionId);
             }
